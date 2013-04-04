@@ -1,4 +1,7 @@
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 setup(
     name='elr',
@@ -9,7 +12,7 @@ setup(
     license='LICENSE.txt',
     description='Ensemble learning with redis',
     long_description=open('README.txt').read(),
-    install_requires=["sdm", "cnidaria", "collections", "functools", "sklearn"]
+    install_requires=["py-sdm", "cnidaria", "scikit-learn >= 0.13"],
     entry_points={
       'console_scripts':[
         'elr=elr:main',

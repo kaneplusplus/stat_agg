@@ -9,27 +9,25 @@ class SdmInterface:
 
     rs='''import sdm, random, struct
 from functools import partial
+from sklearn import preprocessing
 
 with open('/dev/random', 'rb') as f:
   rnd_str = f.read(4)
   rand_int = struct.unpack('I', rnd_str)[0]
   random.seed(rand_int)
 
-learner = sdm.SupportDistributionMachine()
+learner = sdm.SupportDistributionMachine(n_proc=2)
 
 features = sdm.read_features('DATAHANDLE',
   subsample_fn=SUBSAMPLEFN)
 
-unique_categories = list(set(features.categories))
-cat2num = dict(zip(unique_categories, range(len(unique_categories))))
-num2cat = dict(zip(range(len(unique_categories)), unique_categories))
+le = preprocessing.LabelEncoder()
+le.fit(features.categories)
 
 proc_features, pca, scaler = sdm.process_features(
   features, ret_pca=True, ret_scaler=True)
 
-y = [cat2num[cat] for cat in proc_features.categories]
-
-learner.fit(proc_features.features, y)
+learner.fit(proc_features.features, le.transform(proc_features.categories))
 '''
     rs = rs.replace("DATAHANDLE", data_handle).replace("SUBSAMPLEFN", 
       subsample_fn_string)
@@ -37,11 +35,8 @@ learner.fit(proc_features.features, y)
 
   def predict_string(self, data_handle):
     pred_string='''test_features = sdm.read_features("DATAHANDLE")
-
-test_proc = sdm.process_features(test_features, pca=pca,
-  scaler=scaler)
-pred_num=learner.predict(test_proc.features)
-preds = [num2cat[num] for num in pred_num]
+test_proc = sdm.process_features(test_features, pca=pca, scaler=scaler)
+preds = le.inverse_transform(learner.predict(test_proc.features))
 '''
     pred_string = pred_string.replace("DATAHANDLE", data_handle)
     return(pred_string)

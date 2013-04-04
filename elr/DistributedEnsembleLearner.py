@@ -85,4 +85,5 @@ class DistributedEnsembleLearner:
       get_pred_string))
     if aggregate:
       return(self.aggregator(pr))
-    return(pr)
+    else:
+      return(pr)

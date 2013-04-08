@@ -6,7 +6,10 @@ from DistributedEnsembleLearner import tally
 from cnidaria import *
 import redis, time, sdm
 from sklearn import preprocessing
+from functools import partial
 
+feature_training_file="../../feats_train.h5"
+feature_testing_file="../../feats_test.h5"
 # Get the classification from the file name.
 def get_actual(filenames, features):
   ret=[]
@@ -22,33 +25,30 @@ def get_actual(filenames, features):
   return(ret)
 
 # Start the workers.
-start_local_workers(nw=5)
+start_local_workers(nw=2, path="/Users/mike/Projects/xdata/xdataenv/bin/",
+  verbose=True)
 time.sleep(1)
 
-# Create the the handle to redis.
 r = redis.StrictRedis(host="localhost", port=6379, db=0)
 
-# Feed it to the coordinator.
 c = Coordinator(r)
-# ... yum
 
-# Get the classes from the training features file.
-
-# Change to this when the new names_only option is added.
-#features = list(set(cat for cat, name in sdm.read_features("feats_train.h5", names_only=True)))
 le = preprocessing.LabelEncoder()
-le.fit(sdm.read_features("feats_train.h5").categories)
+categories = [x[0] for x in sdm.read_features(feature_training_file, 
+  names_only=True)]
+le.fit(categories)
 
 dlearn = DistributedEnsembleLearner(c, SdmInterface())
-dlearn.fit("feats_train.h5")
+dlearn.fit(feature_training_file)
 
 #preds = dlearn.predict("feats_test.h5")
-all_preds = dlearn.predict("feats_test.h5", aggregate=False )
-min_vote = vote(all_preds, partial(tally, majority=False))
-maj_vote = vote(all_preds, partial(tally, majority=True))
+all_preds = dlearn.predict(feature_testing_file, aggregate=False )
+preds = [all_preds[i][1] for i in xrange(len(all_preds))]
+min_vote = vote(preds, partial(tally, majority=False))
+maj_vote = vote(preds, partial(tally, majority=True))
 
 # Find the actual classes.
-fn = sdm.read_features("feats_test.h5").names
+fn = sdm.read_features(feature_testing_file).names
 actual=get_actual(fn, le.classes_)
 
 num_right_maj = sum([(i == j) for i,j in zip(maj_vote, actual)])

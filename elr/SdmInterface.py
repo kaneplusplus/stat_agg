@@ -16,7 +16,7 @@ with open('/dev/random', 'rb') as f:
   rand_int = struct.unpack('I', rnd_str)[0]
   random.seed(rand_int)
 
-learner = sdm.SupportDistributionMachine(n_proc=2)
+learner = sdm.SDC(n_proc=2)
 
 features = sdm.read_features('DATAHANDLE',
   subsample_fn=SUBSAMPLEFN)

@@ -21,7 +21,7 @@ def tally(votes, majority=True):
     return(l[0][0])
 
 # Clean this up.
-def vote(preds, count_fn):
+def vote(preds, worker_ids=None, count_fn=partial(tally, majority=True)):
   if len(preds) == 0:
     raise(RuntimeError("No predictions supplied"))
   # TODO: remove the values that are exceptions 
@@ -47,7 +47,7 @@ class DistributedEnsembleLearner:
       elif (prediction_aggregator == "minority_vote"):
         self.aggregator=partial(vote, count_fn=partial(tally, majority=False))
       elif (prediction_aggregator == "none"):
-        self.aggregator = lambda x: x
+        self.aggregator = lambda x, y: y
 
     cislist = isinstance(coordinator, list)
     lwislist = isinstance(learner_interface, list)
@@ -69,8 +69,9 @@ class DistributedEnsembleLearner:
   def fit(self, data_handle):
 
     train_strings = [x.fit_string(data_handle) for x in self.learner_interface]
-    tr = map( lambda c, ts: c.publish_exec(ts), self.coordinator, train_strings)
-    return(unlist(tr))
+    tr = unlist(map(lambda c, ts: c.publish_exec(ts), self.coordinator, 
+      train_strings))
+    return(tr)
 
   def predict(self, data_handle, aggregate=True):
   
@@ -79,11 +80,13 @@ class DistributedEnsembleLearner:
       self.learner_interface]
     #get_pred_string = self.learner_interface.get_pred_string()
     get_pred_string = [x.get_pred_string() for x in self.learner_interface]
-    prStatus = map( lambda c, ps: c.publish_exec(ps), self.coordinator, 
+    prStatus = map( lambda c, ps: c.publish_exec(ps), self.coordinator,
       predict_strings)
     pr = unlist(map( lambda c, ps: c.publish_get(ps), self.coordinator, 
       get_pred_string))
     if aggregate:
-      return(self.aggregator(pr))
+      worker_ids = [pr[i][0] for i in xrange(len(pr))]
+      preds = [pr[i][1] for i in xrange(len(pr))]
+      return self.aggregator(preds, worker_ids)
     else:
-      return(pr)
+      return pr

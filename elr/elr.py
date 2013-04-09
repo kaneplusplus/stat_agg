@@ -7,6 +7,7 @@ from cnidaria import *
 import redis, time, sdm
 from sklearn import preprocessing
 from functools import partial
+from Aggregator import *
 
 feature_training_file="../../feats_train.h5"
 feature_testing_file="../../feats_test.h5"
@@ -25,7 +26,7 @@ def get_actual(filenames, features):
   return(ret)
 
 # Start the workers.
-start_local_workers(nw=2, path="/Users/mike/Projects/xdata/xdataenv/bin/",
+start_local_workers(nw=5, path="/Users/mike/Projects/xdata/xdataenv/bin/",
   verbose=True)
 time.sleep(1)
 
@@ -43,9 +44,8 @@ dlearn.fit(feature_training_file)
 
 #preds = dlearn.predict("feats_test.h5")
 all_preds = dlearn.predict(feature_testing_file, aggregate=False )
-preds = [all_preds[i][1] for i in xrange(len(all_preds))]
-min_vote = vote(preds, partial(tally, majority=False))
-maj_vote = vote(preds, partial(tally, majority=True))
+min_vote = MinorityVote().predict(all_preds)
+maj_vote = MajorityVote().predict(all_preds)
 
 # Find the actual classes.
 fn = sdm.read_features(feature_testing_file).names

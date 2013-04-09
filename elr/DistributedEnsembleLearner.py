@@ -2,6 +2,7 @@ import LearnerInterface, SdmInterface
 import cnidaria as cn
 from collections import Counter
 from functools import partial
+from Aggregator import *
 
 # This class is written for sdm's but it should be abstracted for 
 # a more general class of learners.
@@ -9,45 +10,12 @@ from functools import partial
 def unlist(l):
   return([item for sublist in l for item in sublist])
 
-def tally(votes, majority=True):
-    C = Counter(votes)
-    l = C.most_common()
-    if not majority:
-      l.reverse()
-    if len(l) == 1:
-      return(l[0][0])
-    if l[0][1] == l[1][1]:
-      return(None)
-    return(l[0][0])
-
-# Clean this up.
-def vote(preds, worker_ids=None, count_fn=partial(tally, majority=True)):
-  if len(preds) == 0:
-    raise(RuntimeError("No predictions supplied"))
-  # TODO: remove the values that are exceptions 
-  ret=[]
-  for i in xrange(len(preds[0])):
-    votes=[]
-    for j in xrange(len(preds)):
-      votes.append(preds[j][i])
-    ret.append(count_fn(votes))
-  return(ret)
-
-
 class DistributedEnsembleLearner:
 
   def __init__(self, coordinator, learner_interface, 
-    prediction_aggregator="majority_vote"):
+    prediction_aggregator=PassThrough):
 
-    if not prediction_aggregator in ["majority_vote", "minority_vote", "none"]:
-      raise(RuntimeError("Unknown prediction aggregator"))
-    else:
-      if (prediction_aggregator == "majority_vote"):
-        self.aggregator=partial(vote, count_fn=partial(tally, majority=True))
-      elif (prediction_aggregator == "minority_vote"):
-        self.aggregator=partial(vote, count_fn=partial(tally, majority=False))
-      elif (prediction_aggregator == "none"):
-        self.aggregator = lambda x, y: y
+    self.aggregator=prediction_aggregator()
 
     cislist = isinstance(coordinator, list)
     lwislist = isinstance(learner_interface, list)

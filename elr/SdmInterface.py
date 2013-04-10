@@ -18,8 +18,7 @@ with open('/dev/random', 'rb') as f:
 
 learner = sdm.SDC(n_proc=2)
 
-features = sdm.read_features('DATAHANDLE',
-  subsample_fn=SUBSAMPLEFN)
+features = sdm.read_features('DATAHANDLE', subsample_fn=SUBSAMPLEFN)
 
 le = preprocessing.LabelEncoder()
 le.fit(features.categories)

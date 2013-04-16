@@ -3,12 +3,10 @@ import cnidaria as cn
 from collections import Counter
 from functools import partial
 from Aggregator import *
+from unlist import *
 
 # This class is written for sdm's but it should be abstracted for 
 # a more general class of learners.
-
-def unlist(l):
-  return([item for sublist in l for item in sublist])
 
 class DistributedEnsembleLearner:
 

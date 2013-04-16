@@ -1,6 +1,7 @@
 from numpy import *
 from functools import partial
 from collections import Counter
+from numpy import *
 
 # See if we can define the function parameters for at least predict.
 class PredictionAggregator:
@@ -71,9 +72,9 @@ class MinorityVote(SimpleVote):
 #    self.agg = partial(vote, count_fn=partial(tally, majority=False))
 
 
-class MinimumClassifictionVariance:
+class MinimumClassificationVariance:
 
-  def __init__(precision=100):
+  def __init__(self, precision=100):
     self.precision=precision
 
   # In this case prediction_data are tuples of size 2. The first
@@ -81,32 +82,44 @@ class MinimumClassifictionVariance:
   # accuracy and the number of samples used to get the accuracy.
   def train(self, training_data):
     # Get the variances and take their inverses.
-    self.id_weight= dict([(x[0], x[2]/(x[1]*(1-x[1])) for x in training_data])
+
+    ns = array([float(len(x[1])) for x in training_data['prediction']])
+    actual = array(training_data['actual'])
+    preds = [array(training_data['prediction'][i][1])
+      for i in xrange(len(training_data['prediction']))]
+
+    # If we have infinite weights make them 2 * the sum of the other 
+    # weights.
+    ps = [float(sum(actual == preds[i])) for i in xrange(len(preds))]/ns
+    ps = array([x if x < 1. else 1. - 1./(float(self.precision)) for x in ps])
+    weights = 1/(ns*ps*(1-ps))
+    self.id_weight = dict([(training_data['prediction'][i][0],
+      weights[i]) for i in xrange(len(weights))])
   
 
   def predict(self, prediction_data):
-    # This could probably be made faster with ordered sets.
+
     pred_ids = [x[0] for x in prediction_data]
     intersect_ids = filter(lambda x : x in self.id_weight.keys(), pred_ids)
-    
+
     normalization = sum([self.id_weight[int_id] for int_id in intersect_ids])
- 
+
     # Get the prediction data in order of the intersection_ids
     prediction_data_dict = dict(prediction_data)
     ordered_prediction_data = [prediction_data_dict[identifier] for 
       identifier in intersect_ids]
 
     # Now get the number of repetitions per vote based on the weighting.
-    ordered_rep=[round(
-      self.id_weight[identifier]/normalization)*self.precision) for
+    ordered_rep=[int(round(
+      self.id_weight[identifier]/normalization*self.precision)) for
       identifier in intersect_ids]
 
     # Now get the predictions.
     preds=[]
-    for i in xrange(len(prediction_data[0][0])):
-      vote=[]
+    for i in xrange(len(prediction_data[0][1])):
+      votes=[]
       for j in xrange(len(ordered_rep)):
-        votes.append([ordered_prediction_data[i][j]]*ordered_rep[j])
+        votes += ([ordered_prediction_data[j][i]]*ordered_rep[j])
       preds.append(tally(votes))
 
     return(preds)
@@ -116,3 +129,13 @@ class MinimumErrorRate:
   pass
 
 #class MinimumL2:
+
+if __name__=='__main__':
+
+  training_data = {"prediction":[('1', ['a', 'b', 'a']), ('3', ['a', 'a', 'b']),
+    ('2', ['a', 'a', 'a'])], "actual" :['a', 'a', 'a']}
+
+  prediction_data = [('1', ['a', 'a']), ('3', ['b', 'a'])]
+  mcv = MinimumClassificationVariance()
+  mcv.train(training_data)
+  print(mcv.predict(prediction_data))

@@ -4,8 +4,12 @@ import sdm
 #class SdmInterface(LearnerInterface):
 class SdmInterface:
 
-  def fit_string(self, data_handle,
-    subsample_fn_string="partial(random.sample, k=80)"):
+  def __init__(self, subsample_fn_string="partial(random.sample, k=80)",
+    n_proc=2):
+    self.subsample_fn_string=subsample_fn_string
+    self.n_proc=n_proc
+
+  def fit_string(self, data_handle):
 
     rs='''import sdm, random, struct
 from functools import partial
@@ -16,7 +20,7 @@ with open('/dev/random', 'rb') as f:
   rand_int = struct.unpack('I', rnd_str)[0]
   random.seed(rand_int)
 
-learner = sdm.SDC(n_proc=2)
+learner = sdm.SDC(n_proc=NPROC)
 
 features = sdm.read_features('DATAHANDLE', subsample_fn=SUBSAMPLEFN)
 
@@ -29,7 +33,7 @@ proc_features, pca, scaler = sdm.process_features(
 learner.fit(proc_features.features, le.transform(proc_features.categories))
 '''
     rs = rs.replace("DATAHANDLE", data_handle).replace("SUBSAMPLEFN", 
-      subsample_fn_string)
+      self.subsample_fn_string).replace("NPROC", str(self.n_proc))
     return(rs)
 
   def predict_string(self, data_handle):

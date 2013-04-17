@@ -15,8 +15,8 @@ setup(
     install_requires=["py-sdm", "cnidaria", "scikit-learn >= 0.13"],
     entry_points={
       'console_scripts':[
-        'elr=elr:main',
-        'clear_env=clear_env:main'
+        'elr_bench=elr.elr_bench:main',
+        'clear_env=elr.clear_env:main'
       ],
     },
 )

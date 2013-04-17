@@ -39,7 +39,7 @@ class DistributedEnsembleLearner:
       train_strings))
     return(tr)
 
-  def predict(self, data_handle, aggregate=True):
+  def predict(self, data_handle):
   
     #predict_strings = self.learner_interface.predict_string(data_handle)
     predict_strings = [x.predict_string(data_handle) for x in 
@@ -50,9 +50,10 @@ class DistributedEnsembleLearner:
       predict_strings)
     pr = unlist(map( lambda c, ps: c.publish_get(ps), self.coordinator, 
       get_pred_string))
-    if aggregate:
-      worker_ids = [pr[i][0] for i in xrange(len(pr))]
-      preds = [pr[i][1] for i in xrange(len(pr))]
-      return self.aggregator(preds, worker_ids)
-    else:
-      return pr
+    return pr
+#    if aggregate:
+#      worker_ids = [pr[i][0] for i in xrange(len(pr))]
+#      preds = [pr[i][1] for i in xrange(len(pr))]
+#      return self.aggregator(preds, worker_ids)
+#    else:
+#      return pr

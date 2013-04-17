@@ -82,7 +82,6 @@ class MinimumClassificationVariance:
   # accuracy and the number of samples used to get the accuracy.
   def train(self, training_data):
     # Get the variances and take their inverses.
-
     ns = array([float(len(x[1])) for x in training_data['prediction']])
     actual = array(training_data['actual'])
     preds = [array(training_data['prediction'][i][1])
@@ -92,6 +91,7 @@ class MinimumClassificationVariance:
     # weights.
     ps = [float(sum(actual == preds[i])) for i in xrange(len(preds))]/ns
     ps = array([x if x < 1. else 1. - 1./(float(self.precision)) for x in ps])
+    ps = array([x if x > 0. else 1./(float(self.precision)) for x in ps])
     weights = 1/(ns*ps*(1-ps))
     self.id_weight = dict([(training_data['prediction'][i][0],
       weights[i]) for i in xrange(len(weights))])

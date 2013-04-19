@@ -77,10 +77,15 @@ def main():
 
     # Create the distributed ensemble learner, which is a collection of
     # sdms.
-    dlearn = DistributedEnsembleLearner(c, 
-      SdmInterface(subsample_fn_string="partial(random.sample, k="+
-        str(int(round(args.sample_prop*len(categories))))+"),", 
-        n_proc=args.num_procs))
+    if (args_sample.prop < 1):
+      dlearn = DistributedEnsembleLearner(c, 
+        SdmInterface(subsample_fn_string="partial(random.sample, k="+
+          str(int(round(args.sample_prop*len(categories))))+"),", 
+          n_proc=args.num_procs))
+    else:
+      dlearn = DistributedEnsembleLearner(c, 
+        SdmInterface(subsample_fn_string="None", n_proc=args.num_procs))
+
         
     dlearn.fit(args.train)
 

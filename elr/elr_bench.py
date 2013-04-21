@@ -8,7 +8,7 @@ import redis, time, sdm
 from sklearn import preprocessing
 from functools import partial
 from Aggregator import *
-import argparse
+import argparse, time
 
 # Get the classification from the file name.
 def get_actual(filenames, features):
@@ -69,7 +69,7 @@ def main():
     # returns the workers are running and waiting for tasks.
     start_local_workers(nw=args.num_local_workers, path=args.path, 
       verbose=args.verbose)
-    time.sleep(0.5)
+    time.sleep(1)
 
     # Create the coordinator.
     r = redis.StrictRedis(host=args.host, port=args.port, db=args.db)
@@ -77,7 +77,7 @@ def main():
 
     # Create the distributed ensemble learner, which is a collection of
     # sdms.
-    if (args_sample.prop < 1):
+    if (args.sample_prop < 1):
       dlearn = DistributedEnsembleLearner(c, 
         SdmInterface(subsample_fn_string="partial(random.sample, k="+
           str(int(round(args.sample_prop*len(categories))))+"),", 
@@ -86,14 +86,17 @@ def main():
       dlearn = DistributedEnsembleLearner(c, 
         SdmInterface(subsample_fn_string="None", n_proc=args.num_procs))
 
-        
+    train_time = time.time()    
     dlearn.fit(args.train)
+    train_time = time.time() - train_time
 
     # Get the predictions for the validation data set and compare it
     # with the validation actuals to train the aggregator.
+    validate_time = time.time()
     validate_preds = dlearn.predict(args.validate)
     file_info = sdm.read_features(args.validate, names_only=True)
     validate_actuals = get_actual([x[1] for x in file_info], le.classes_)
+    validate_time = time.time() - validate_time
 
     # Create the ensemble aggregator.
     agg_map = {"minority" : MinorityVote, "majority" : MajorityVote, 
@@ -102,14 +105,19 @@ def main():
     agg.train({"actual": validate_actuals, "prediction" : validate_preds})
 
     # Now do the predition.
+    predict_time = time.time()
     agg_pred = agg.predict(dlearn.predict(args.predict))
     file_info = sdm.read_features(args.validate, names_only=True)
     actual = get_actual([x[1] for x in file_info], le.classes_)
+    predict_time = time.time() - predict_time
 
     num_right = sum([(i == j) for i,j in zip(agg_pred, actual)])
-    print(("Majority vote sdm got {} predictions correct out of {}"+
-      " for an accuracy of {}.").format(num_right, len(actual), 
-      num_right / len(actual)))
+
+    print(("Accuracy: {},Workers: {},Proc per worker: {},Sample prop: {}"+
+      ",Aggregator: {},Training time: {},Validation time: {}"+
+      ",Prediction time: {}").format(num_right/len(actual), 
+      args.num_local_workers, args.num_procs, args.sample_prop, 
+      args.aggregator_type, train_time, validate_time, predict_time))
 
   except Exception as e:
     print("Exception: {0}".format(e.message))

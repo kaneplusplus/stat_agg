@@ -53,7 +53,7 @@ the training data, and uses 4 processor threads can be found with the following
 command:
 
 ```bash
-elr_bench -t feats_train.h5 -l feats_validate.h5 -r feats_test.h5 -s 0.25 -w 4 -p 4 
+> elr_bench -t feats_train.h5 -l feats_validate.h5 -r feats_test.h5 -s 0.25 -w 4 -p 4 
 ```
 
 Support

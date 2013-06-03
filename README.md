@@ -7,6 +7,7 @@ Description
 ---
 
 The goal of elr is to:
+
 1. Provide a framework for building ensembles of learners for classification
 and regression challenges.
 2. Manage computational complexity by statistical and machine learning 

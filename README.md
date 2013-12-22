@@ -6,7 +6,7 @@ Statistical aggregates with Redis.
 Description
 ---
 
-The goal of elr is to:
+The goal of the stat\_agg package is to:
 
 1. Provide a complete suite of statistical aggregators that maximize ensemble
 prediction accuracy.
@@ -28,10 +28,10 @@ package (version 0.13 or above).
 Installing stat\_agg
 ---
 
-The easiest way to install elr is to use pip from within a shell:
+The easiest way to install stat\_agg is to use pip from within a shell:
 
 ```bash
-> pip install -e git+https://github.com/kaneplusplus/elr.git#egg=stat_agg
+> pip install -e git+https://github.com/kaneplusplus/stat_agg.git#egg=stat_agg
 ```
 
 This package can also be installed with pip and the following shell commands:

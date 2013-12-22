@@ -11,7 +11,7 @@ setup(
     packages=['elr'],
     license='LICENSE.txt',
     description='Ensemble learning with redis',
-    long_description=open('README.txt').read(),
+    long_description=open('README.md').read(),
     install_requires=["py-sdm", "cnidaria", "scikit-learn >= 0.13"],
     entry_points={
       'console_scripts':[

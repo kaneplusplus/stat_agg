@@ -1,1 +1,0 @@
-python elr_bench.py -t ../../feats_train.h5 -l ../../feats_test.h5 -r ../../feats_test.h5 -s 0.3 -w 3 -x /Users/mike/Projects/xdata/xdataenv/bin/

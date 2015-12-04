@@ -5,14 +5,14 @@ except ImportError:
 
 setup(
     name='stat_agg',
-    version='0.1',
+    version='0.2',
     author='Michael J. Kane',
     author_email='kaneplusplus@gmail.com',
     packages=['stat_agg'],
     license='LICENSE.txt',
-    description='Ensemble learning with redis',
+    description='Ensemble learning',
     long_description=open('README.md').read(),
-    install_requires=["py-sdm", "cnidaria", "scikit-learn >= 0.13"],
+    install_requires=["scikit-learn >= 0.13"],
     entry_points={
       'console_scripts':[
         'stat_agg_bench=stat_agg.stat_agg_bench:main',

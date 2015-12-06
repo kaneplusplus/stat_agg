@@ -2,19 +2,39 @@ from pandas import DataFrame
 from functools import partial
 from collections import Counter
 from numpy import *
-import statsmodels.formula.api as sm
 import pdb
 from sklearn.ensemble import *
+from sklearn import linear_model
 
-# See if we can define the function parameters for at least predict.
 class PredictionAggregator:
+  """The abstract class for aggregating predictions."""
   def train(self, training_data):
     pass
   def predict(self, prediction_data):
     pass
 
-# Support functions for majority and minority voting.
 def tally(votes, majority=True):
+  """Tally votes and return either the majority, the minority vote, or None
+  if there are ties.
+
+  Args: 
+    votes (list) : the votes to tally.
+    majority (bool): should the most frequent vote be returned? If False 
+      the least frequent is used
+
+  Returns:
+    If majority is True then the most frequent vote is returned. If 
+    False then the least frequent. If there is no majority/minority 
+    then None.
+
+  Example:
+    >>> tally(["a", "a", "b"])
+    'a'    
+    >>> tally(["a", "a", "b"], majority=False)
+    'b'
+    >>> tally(["a", "a", "b", "b"]) == None
+    True
+  """  
   C = Counter(votes)
   l = C.most_common()
   if not majority:
@@ -26,7 +46,8 @@ def tally(votes, majority=True):
   return(l[0][0])
 
 class SimpleVote(PredictionAggregator):
-
+  """The class that implements the MajorityVote and MinorityVote 
+  classes for predicting categorical variables."""
   def __init__(self, agg):
     self.agg = agg
   
@@ -42,29 +63,151 @@ class SimpleVote(PredictionAggregator):
     return(ret)
 
 class MajorityVote(SimpleVote):
-  
+  """Aggregate categorical variables and predict based on a majority vote
+
+  Example:
+    >> # Create 2 learners named '1' and '2' with 2 predictions each.
+    >> prediction_data = {'1': ['a', 'a'], '3': ['b', 'a']}
+    >> mv = MajorityVote()
+    >> print(mv.predict(prediction_data))
+    [None, 'a']
+  """
   def __init__(self):
     SimpleVote.__init__(self, agg=partial(tally, majority=True))
 
 class MinorityVote(SimpleVote):
+  """Aggregate categorical variables and predict based on a minority vote
+
+  Example:
+    >> # Create 2 learners named '1' and '2' with 2 predictions each.
+    >> prediction_data = {'1': ['a', 'a'], '2' : ['a', 'a'], '3': ['b', 'a']}
+    >> mv = MinorityVote()
+    >> print(mv.predict(prediction_data))
+    ['b', 'a']
+  """
   
   def __init__(self):
     SimpleVote.__init__(self, agg=partial(tally, majority=False))
 
 class MinimumContinuousOLS(PredictionAggregator):
+  """Aggregate continuous variables and predict base on the ols estimator
+
+  Example:
+    >>> from pandas import read_csv
+    >>> from statistics import pstdev, variance
+    >>> import statsmodels.formula.api as sm
+    >>> 
+    >>> iris_url = "https://raw.githubusercontent.com/pydata/pandas/master/pandas/tests/data/iris.csv" 
+    >>> 
+    >>> # Download the iris data set.
+    ... iris = read_csv(iris_url)
+    >>> 
+    >>> # Partition iris into 3 parts.
+    ... iris1 = iris[0:15].append(iris[50:65]).append(iris[100:115])
+    >>> iris2 = iris[15:40].append(iris[65:90]).append(iris[115:140])
+    >>> iris3 = iris[40:50].append(iris[90:100]).append(iris[140:150])
+    >>> 
+    >>> # Fit the iris subsets using the statsmodels package..
+    ... form = "SepalLength ~ SepalWidth + PetalLength + PetalWidth + Name"
+    >>> fit1 = sm.ols(formula=form, data=iris1).fit()
+    >>> fit2 = sm.ols(formula=form, data=iris2).fit()
+    >>> fit3 = sm.ols(formula=form, data=iris3).fit()
+    >>> 
+    >>> # Get a random subset of the iris data.
+    ... iris_sample = iris.sample(50)
+    >>> 
+    >>> est1 = fit1.predict(iris_sample)
+    >>> est2 = fit2.predict(iris_sample)
+    >>> est3 = fit3.predict(iris_sample)
+    >>> 
+    >>> # Print the in-sample standard errors.
+    ... print pstdev(est1 - iris_sample['SepalLength'])
+    0.3014955119
+    >>> print pstdev(est2 - iris_sample['SepalLength'])
+    0.279841460366
+    >>> print pstdev(est3 - iris_sample['SepalLength'])
+    0.363993665693
+    >>> 
+    >>> 
+    >>> training_data = {"prediction" : {'a': est1,
+    ...                                  'b': est2,
+    ...                                  'c': est3},
+    ...                  "actual" : iris_sample['SepalLength']}
+    >>> 
+    >>> # Use the training data to fit the OLS aggregator.
+    ... mco = MinimumContinuousOLS()
+    >>> mco.train(training_data)
+    >>> 
+    >>> # Print the standard deviation of the aggregator.
+    ... print pstdev(mco.predict(training_data['prediction']) - \
+    ...                          iris_sample['SepalLength'])
+    0.271979762123
+  """
   def __init__(self):
     self.df = None
 
   def train(self, training_data):
     self.df = DataFrame(data=training_data['prediction'])
-    self.df['actual'] = [x for x in training_data['actual']]
+    self.actual = training_data['actual']
   def predict(self, prediction_data):
-    form = "actual ~ " + "+".join(prediction_data.keys())
-    fit = sm.ols(formula=form, data=self.df).fit()
+    lm = linear_model.LinearRegression()
+    lm.fit(self.df, self.actual)
     pred_df = DataFrame(data=prediction_data)
-    return(fit.predict(pred_df))
+    return(lm.predict(pred_df))
 
 class MinimumContinuousRandomForest(PredictionAggregator):
+  """Aggregate continuous variables and predict base on the estimator variance 
+
+  Example:
+    >>> from pandas import read_csv
+    >>> from statistics import pstdev, variance
+    >>> import statsmodels.formula.api as sm
+    >>> 
+    >>> iris_url = "https://raw.githubusercontent.com/pydata/pandas/master/pandas/tests/data/iris.csv"
+    >>> 
+    >>> # Download the iris data set.
+    ... iris = read_csv(iris_url)
+    >>> 
+    >>> # Partition iris into 3 parts.
+    ... iris1 = iris[0:15].append(iris[50:65]).append(iris[100:115])
+    >>> iris2 = iris[15:40].append(iris[65:90]).append(iris[115:140])
+    >>> iris3 = iris[40:50].append(iris[90:100]).append(iris[140:150])
+    >>> 
+    >>> # Fit the iris subsets using the statsmodels package..
+    ... form = "SepalLength ~ SepalWidth + PetalLength + PetalWidth + Name"
+    >>> fit1 = sm.ols(formula=form, data=iris1).fit()
+    >>> fit2 = sm.ols(formula=form, data=iris2).fit()
+    >>> fit3 = sm.ols(formula=form, data=iris3).fit()
+    >>> 
+    >>> # Get a random subset of the iris data.
+    ... iris_sample = iris.sample(50)
+    >>> 
+    >>> est1 = fit1.predict(iris_sample)
+    >>> est2 = fit2.predict(iris_sample)
+    >>> est3 = fit3.predict(iris_sample)
+    >>> 
+    >>> # Print the in-sample standard errors.
+    ... print pstdev(est1 - iris_sample['SepalLength'])
+    0.356900395729
+    >>> print pstdev(est2 - iris_sample['SepalLength'])
+    0.311543723503
+    >>> print pstdev(est3 - iris_sample['SepalLength'])
+    0.389496162197
+    >>> 
+    >>> 
+    >>> training_data = {"prediction" : {'a': est1,
+    ...                                  'b': est2,
+    ...                                  'c': est3},
+    ...                  "actual" : iris_sample['SepalLength']}
+    >>> 
+    >>> # Use the training data to fit the minimum variance aggregator.
+    ... 
+    >>> mcrf = MinimumContinuousRandomForest()
+    >>> mcrf.train(training_data)
+    >>> print pstdev(mcrf.predict(training_data['prediction']) - \
+    ...                           iris_sample['SepalLength'])
+    0.325353841932
+  """
   def __init__(self):
     self.df = None
 
@@ -79,6 +222,58 @@ class MinimumContinuousRandomForest(PredictionAggregator):
     return(clf.predict(DataFrame(prediction_data)))
 
 class MinimumContinuousVariance(PredictionAggregator):
+  """Aggregate continuous variables and predict base on the estimator variance 
+
+  Example:
+    >>> from pandas import read_csv
+    >>> from statistics import pstdev, variance
+    >>> import statsmodels.formula.api as sm
+    >>> 
+    >>> iris_url = "https://raw.githubusercontent.com/pydata/pandas/master/pandas/tests/data/iris.csv"
+    >>> 
+    >>> # Download the iris data set.
+    ... iris = read_csv(iris_url)
+    >>> 
+    >>> # Partition iris into 3 parts.
+    ... iris1 = iris[0:15].append(iris[50:65]).append(iris[100:115])
+    >>> iris2 = iris[15:40].append(iris[65:90]).append(iris[115:140])
+    >>> iris3 = iris[40:50].append(iris[90:100]).append(iris[140:150])
+    >>> 
+    >>> # Fit the iris subsets using the statsmodels package..
+    ... form = "SepalLength ~ SepalWidth + PetalLength + PetalWidth + Name"
+    >>> fit1 = sm.ols(formula=form, data=iris1).fit()
+    >>> fit2 = sm.ols(formula=form, data=iris2).fit()
+    >>> fit3 = sm.ols(formula=form, data=iris3).fit()
+    >>> 
+    >>> # Get a random subset of the iris data.
+    ... iris_sample = iris.sample(50)
+    >>> 
+    >>> est1 = fit1.predict(iris_sample)
+    >>> est2 = fit2.predict(iris_sample)
+    >>> est3 = fit3.predict(iris_sample)
+    >>> 
+    >>> # Print the in-sample standard errors.
+    ... print pstdev(est1 - iris_sample['SepalLength'])
+    0.356900395729
+    >>> print pstdev(est2 - iris_sample['SepalLength'])
+    0.311543723503
+    >>> print pstdev(est3 - iris_sample['SepalLength'])
+    0.389496162197
+    >>> 
+    >>> 
+    >>> training_data = {"prediction" : {'a': est1,
+    ...                                  'b': est2,
+    ...                                  'c': est3},
+    ...                  "actual" : iris_sample['SepalLength']}
+    >>> 
+    >>> # Use the training data to fit the minimum variance aggregator.
+    ... 
+    >>> mcv = MinimumContinuousVariance()
+    >>> mcv.train(training_data)
+    >>> print pstdev(mcv.predict(training_data['prediction']) - \
+    ...                          iris_sample['SepalLength'])
+    0.316002742912
+  """
   def __init__(self):
     self.variances = {}
   def train(self, training_data):
@@ -99,6 +294,19 @@ class MinimumContinuousVariance(PredictionAggregator):
     return(ret)
     
 class MinimumClassificationVariance:
+  """Aggregate categorical variables and predict base on the estimator variance 
+
+  Example
+    >>> training_data = {"prediction":{'1': ['a', 'b', 'a'], '3': ['a', 'a', 'b'],
+    ...   '2' : ['a', 'a', 'a']}, "actual" : ['a', 'a', 'a']}
+    >>> 
+    >>> prediction_data = {'1': ['a', 'a'], '3': ['b', 'a']}
+    >>> 
+    >>> mcv = MinimumClassificationVariance()
+    >>> mcv.train(training_data)
+    >>> print(mcv.predict(prediction_data))
+    [None, 'a']
+  """
 
   def __init__(self, precision=100):
     self.weights = {}
@@ -121,7 +329,6 @@ class MinimumClassificationVariance:
           self.weights[wk] = 2*tot_weight
     
   def predict(self, prediction_data):
-    # TODO: START HERE.
     preds = DataFrame(prediction_data)
     col_names = prediction_data.keys()
     tally_dict = {}
@@ -143,67 +350,3 @@ class MinimumClassificationVariance:
         max_level.append(tally_df.columns[ is_max ][0])
     return(max_level)
 
-
-#if __name__=='__main__':
-from pandas import read_csv
-from statistics import pstdev, variance
-
-iris = read_csv("https://raw.githubusercontent.com/pydata/pandas/master/pandas/tests/data/iris.csv")
-
-iris1 = iris[0:15].append(iris[50:65]).append(iris[100:115])
-iris2 = iris[15:40].append(iris[65:90]).append(iris[115:140])
-iris3 = iris[40:50].append(iris[90:100]).append(iris[140:150])
-
-# Fit the iris subsets.
-form = "SepalLength ~ SepalWidth + PetalLength + PetalWidth + Name"
-fit1 = sm.ols(formula=form, data=iris1).fit()
-fit2 = sm.ols(formula=form, data=iris2).fit()
-fit3 = sm.ols(formula=form, data=iris3).fit()
-
-# Get a random subset of the iris data.
-iris_sample = iris.sample(50)
-
-est1 = fit1.predict(iris_sample)
-est2 = fit2.predict(iris_sample)
-est3 = fit3.predict(iris_sample)
-
-print pstdev(est1 - iris_sample['SepalLength'])
-print pstdev(est2 - iris_sample['SepalLength'])
-print pstdev(est3 - iris_sample['SepalLength'])
-
-# The fitted and actual values are the training data for the ensemble 
-# learner.
-training_data = {"prediction" : {'a': est1,
-                                 'b': est2,
-                                 'c': est3},
-                 "actual" : iris_sample['SepalLength']}
-mcv = MinimumContinuousVariance()
-mcv.train(training_data)
-print pstdev(mcv.predict(training_data['prediction']) - \
-                         iris_sample['SepalLength'])
-
-mco = MinimumContinuousOLS()
-mco.train(training_data)
-print pstdev(mco.predict(training_data['prediction']) - \
-                         iris_sample['SepalLength'])
-
-mcrf = MinimumContinuousRandomForest()
-mcrf.train(training_data)
-print pstdev(mcrf.predict(training_data['prediction']) - \
-                          iris_sample['SepalLength'])
-
-training_data = {"prediction":{'1': ['a', 'b', 'a'], '3': ['a', 'a', 'b'],
-  '2' : ['a', 'a', 'a']}, "actual" : ['a', 'a', 'a']}
-
-#prediction_data = [('1', ['a', 'a']), ('3', ['b', 'a'])]
-prediction_data = {'1': ['a', 'a'], '3': ['b', 'a']}
-
-mv = MinorityVote()
-print(mv.predict(prediction_data))
-
-mv = MajorityVote()
-print(mv.predict(prediction_data))
-
-mcv = MinimumClassificationVariance()
-mcv.train(training_data)
-print(mcv.predict(prediction_data))

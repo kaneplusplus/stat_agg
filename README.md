@@ -36,7 +36,7 @@ Installing stat\_agg
 The easiest way to install stat\_agg is to use pip from within a shell:
 
 ```bash
-> pip install -e git+https://github.com/kaneplusplus/statagg.git#egg=statagg
+> pip install -e git+https://github.com/kaneplusplus/stat_agg.git#egg=statagg
 ```
 
 Support

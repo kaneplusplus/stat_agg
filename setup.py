@@ -4,11 +4,11 @@ except ImportError:
     from distutils.core import setup
 
 setup(
-    name='stat_agg',
+    name='statagg',
     version='0.2',
     author='Michael J. Kane',
     author_email='kaneplusplus@gmail.com',
-    packages=['stat_agg'],
+    packages=['statagg'],
     license='LICENSE.txt',
     description='Ensemble learning',
     long_description=open('README.md').read(),

@@ -29,7 +29,6 @@ The stat\_agg package has been tested on Python version 2.7 with the following
 packages:
 - pandas 0.17.1
 - sklearn 0.17
-- numpy 1.10.1
 
 Installing stat\_agg
 ---

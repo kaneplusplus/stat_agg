@@ -12,11 +12,5 @@ setup(
     license='LICENSE.txt',
     description='Ensemble learning',
     long_description=open('README.md').read(),
-    install_requires=["scikit-learn >= 0.13"],
-    entry_points={
-      'console_scripts':[
-        'stat_agg_bench=stat_agg.stat_agg_bench:main',
-        'clear_env=stat_agg.clear_env:main'
-      ],
-    },
+    install_requires=["scikit-learn >= 0.17", "pandas >= 0.17.1"]
 )

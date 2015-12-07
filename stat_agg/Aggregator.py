@@ -89,6 +89,25 @@ class MinorityVote(SimpleVote):
   def __init__(self):
     SimpleVote.__init__(self, agg=partial(tally, majority=False))
 
+class ContinuousAverage(PredictionAggregator):
+  """Aggregate continuous variables and predict on the average of learners'
+  predition
+
+  Example:
+    >> # Create 2 learners named '1' and '2' with 2 predictions each.
+    >> prediction_data = {'1': [10, 10], '2' : [20, 30], '3': [30, 50]}
+    >> ca = ContinuousAverage()
+    >> print(ca.predict(prediction_data))
+    [20.0, 30.0]
+  """
+  def predict(self, prediction_data):
+    preds = DataFrame(prediction_data)
+    ret = []
+    for row in preds.iterrows():
+      index, data = row
+      ret.append(mean(data))
+    return(ret)
+
 class MinimumContinuousOLS(PredictionAggregator):
   """Aggregate continuous variables and predict base on the ols estimator
 
@@ -139,7 +158,7 @@ class MinimumContinuousOLS(PredictionAggregator):
     >>> mco.train(training_data)
     >>> 
     >>> # Print the standard deviation of the aggregator.
-    ... print pstdev(mco.predict(training_data['prediction']) - \
+    >>> print pstdev(mco.predict(training_data['prediction']) - \
     ...                          iris_sample['SepalLength'])
     0.271979762123
   """
@@ -349,4 +368,8 @@ class MinimumClassificationVariance:
       else:
         max_level.append(tally_df.columns[ is_max ][0])
     return(max_level)
+
+prediction_data = {'1': [10, 10], '2' : [20, 30], '3': [30, 50]}
+ca = ContinuousAverage()
+print(ca.predict(prediction_data))
 

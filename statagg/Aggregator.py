@@ -368,7 +368,3 @@ class MinimumClassificationVariance:
         max_level.append(tally_df.columns[ is_max ][0])
     return(max_level)
 
-prediction_data = {'1': [10, 10], '2' : [20, 30], '3': [30, 50]}
-ca = ContinuousAverage()
-print(ca.predict(prediction_data))
-

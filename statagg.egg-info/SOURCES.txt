@@ -1,0 +1,11 @@
+CHANGES.txt
+LICENSE.txt
+MANIFEST.in
+setup.py
+statagg/Aggregator.py
+statagg/__init__.py
+statagg.egg-info/PKG-INFO
+statagg.egg-info/SOURCES.txt
+statagg.egg-info/dependency_links.txt
+statagg.egg-info/requires.txt
+statagg.egg-info/top_level.txt

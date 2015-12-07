@@ -58,7 +58,7 @@ The package currently supports the following statistical aggregators:
 Using the library
 ---
 
-## Simple Aggregators
+### Simple Aggregators
 
 Simple aggregators are those where no training is necessary and the aggregate
 prediction can be calculated directly from learners. One example of this is
@@ -77,7 +77,7 @@ Note that in the first prediction, learner 1 and 2 predicted ```'a'``` and
 ```None``` was returned. Other simple aggregators include minority vote for
 categorical variables and average for continuous outcomes.
 
-## Model-based Aggregators
+### Model-based Aggregators
 
 More sophisticated aggregators can be constructed by training on the
 accuracy of learners' predictions. One example is the ordinary least squares (OLS)

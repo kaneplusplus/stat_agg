@@ -25,8 +25,11 @@ unavailable.
 Requirements
 ---
 
-The stat\_agg package requires Python (tested on version 2.7), pandas, 
-and the scikit-learn Python package (version 0.13 or above).
+The stat\_agg package has been tested on Python version 2.7 with the following
+packages:
+- pandas 0.17.1
+- sklearn 0.17
+- numpy 1.10.1
 
 Installing stat\_agg
 ---

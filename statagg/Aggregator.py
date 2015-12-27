@@ -4,6 +4,7 @@ from collections import Counter
 from numpy import *
 from sklearn.ensemble import *
 from sklearn import linear_model
+from statistics import pstdev, variance
 
 class PredictionAggregator:
   """The abstract class for aggregating predictions."""

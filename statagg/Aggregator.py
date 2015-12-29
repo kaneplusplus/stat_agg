@@ -170,8 +170,9 @@ class MinimumContinuousOLS(PredictionAggregator):
     self.actual = training_data['actual']
   def predict(self, prediction_data):
     lm = linear_model.LinearRegression()
-    lm.fit(self.df, self.actual)
+    lm.fit(self.df[prediction_data.keys()], self.actual)
     pred_df = DataFrame(data=prediction_data)
+    ret = lm.predict(pred_df)
     return(lm.predict(pred_df))
 
 class MinimumContinuousRandomForest(PredictionAggregator):

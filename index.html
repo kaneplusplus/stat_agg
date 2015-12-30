@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="stat_agg : statistical aggregates for machine learning in python">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>stat_agg</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/kaneplusplus/stat_agg">View on GitHub</a>
+
+          <h1 id="project_title">stat_agg</h1>
+          <h2 id="project_tagline">statistical aggregates for machine learning in python</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/kaneplusplus/stat_agg/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/kaneplusplus/stat_agg/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="description" class="anchor" href="#description" aria-hidden="true"><span class="octicon octicon-link"></span></a>Description</h1>
+
+<p>stat_agg is a simple Python package for aggregating predictions from an ensemble
+of learners. When aggregated, the statistical accuracy of predictions
+from different learners is often greater than any one of them. This package implements
+various approaches to aggregated prediction of continuous and categorical 
+prediction challenges.</p>
+
+<p>The goal of the stat_agg package is to:</p>
+
+<ol>
+<li>Provide a suite of statistical aggregators that maximize ensemble
+prediction accuracy for continuous and categorical outcomes.</li>
+<li>Manage ensemble in a way that is dynamic. New learners
+can be added to an ensemble at any time.</li>
+<li>Detect and retrain when one or more of the learners suddenly becomes
+unavailable.</li>
+</ol>
+
+<h1>
+<a id="requirements" class="anchor" href="#requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Requirements</h1>
+
+<p>The stat_agg package has been tested on Python version 2.7 with the following
+packages:</p>
+
+<ul>
+<li>pandas 0.17.1</li>
+<li>sklearn 0.17</li>
+</ul>
+
+<h2>
+<a id="installing-stat_agg" class="anchor" href="#installing-stat_agg" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing stat_agg</h2>
+
+<p>The easiest way to install stat_agg is to use pip from within a shell:</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-k">&gt;</span> pip install -e git+https://github.com/kaneplusplus/stat_agg.git#egg=statagg</pre></div>
+
+<h1>
+<a id="support" class="anchor" href="#support" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support</h1>
+
+<p>statagg is supported on Python version 2.7</p>
+
+<p>The development home of this project can be found at: <a href="https://github.com/kaneplusplus/stat_agg">https://github.com/kaneplusplus/stat_agg</a></p>
+
+<p>The package currently supports the following statistical aggregators:</p>
+
+<ul>
+<li>Categorical Prediction 
+
+<ul>
+<li>Max Vote</li>
+<li>Min Vote</li>
+<li>Minimum Variance</li>
+</ul>
+</li>
+<li>Continuous Prediction
+
+<ul>
+<li>Average Value</li>
+<li>Minimum Variance</li>
+<li>Least Squares</li>
+<li>Random Forests</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="using-the-library" class="anchor" href="#using-the-library" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using the library</h1>
+
+<h2>
+<a id="simple-aggregators" class="anchor" href="#simple-aggregators" aria-hidden="true"><span class="octicon octicon-link"></span></a>Simple Aggregators</h2>
+
+<p>Simple aggregators are those where no training is necessary and the aggregate
+prediction can be calculated directly from learners. One example of this is
+majority vote where the aggregator simply returns the predition that appears the
+most often. An example is shown below.</p>
+
+<div class="highlight highlight-source-python"><pre><span class="pl-k">from</span> statagg <span class="pl-k">import</span> <span class="pl-k">*</span>
+<span class="pl-c"># Create 2 learners named '1' and '2' with 2 predictions each.</span>
+prediction_data <span class="pl-k">=</span> {<span class="pl-s"><span class="pl-pds">'</span>1<span class="pl-pds">'</span></span>: [<span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>], <span class="pl-s"><span class="pl-pds">'</span>3<span class="pl-pds">'</span></span>: [<span class="pl-s"><span class="pl-pds">'</span>b<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>]}
+mv <span class="pl-k">=</span> MajorityVote()
+<span class="pl-k">print</span>(mv.predict(prediction_data))
+<span class="pl-c"># [None, 'a']</span></pre></div>
+
+<p>Note that in the first prediction, learner 1 and 2 predicted <code>'a'</code> and 
+<code>'b'</code> respectively. Since there is no majority in this case, a value of
+<code>None</code> was returned. Other simple aggregators include minority vote for
+categorical variables and average for continuous outcomes.</p>
+
+<h2>
+<a id="model-based-aggregators" class="anchor" href="#model-based-aggregators" aria-hidden="true"><span class="octicon octicon-link"></span></a>Model-based Aggregators</h2>
+
+<p>More sophisticated aggregators can be constructed by training on the
+accuracy of learners' predictions. One example is the ordinary least squares (OLS)
+aggregator, which uses learner predictions as regressors and fits against the
+outcome. An example using the iris data set is shown below.</p>
+
+<div class="highlight highlight-source-python"><pre><span class="pl-k">from</span> statagg <span class="pl-k">import</span> <span class="pl-k">*</span>
+<span class="pl-k">from</span> pandas <span class="pl-k">import</span> read_csv
+<span class="pl-k">from</span> statistics <span class="pl-k">import</span> pstdev, variance
+<span class="pl-k">import</span> statsmodels.formula.api <span class="pl-k">as</span> sm
+
+iris_url <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>https://raw.githubusercontent.com/pydata/pandas/master/panda s/tests/data/iris.csv<span class="pl-pds">"</span></span> 
+
+<span class="pl-c"># Download the iris data set.</span>
+iris <span class="pl-k">=</span> read_csv(iris_url)
+
+<span class="pl-c"># Partition iris into 3 parts.</span>
+iris1 <span class="pl-k">=</span> iris[<span class="pl-c1">0</span>:<span class="pl-c1">15</span>].append(iris[<span class="pl-c1">50</span>:<span class="pl-c1">65</span>]).append(iris[<span class="pl-c1">100</span>:<span class="pl-c1">115</span>])
+iris2 <span class="pl-k">=</span> iris[<span class="pl-c1">15</span>:<span class="pl-c1">40</span>].append(iris[<span class="pl-c1">65</span>:<span class="pl-c1">90</span>]).append(iris[<span class="pl-c1">115</span>:<span class="pl-c1">140</span>])
+iris3 <span class="pl-k">=</span> iris[<span class="pl-c1">40</span>:<span class="pl-c1">50</span>].append(iris[<span class="pl-c1">90</span>:<span class="pl-c1">100</span>]).append(iris[<span class="pl-c1">140</span>:<span class="pl-c1">150</span>])
+
+<span class="pl-c"># Fit the iris subsets using the statsmodels package..</span>
+form <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>SepalLength ~ SepalWidth + PetalLength + PetalWidth + Name<span class="pl-pds">"</span></span>
+fit1 <span class="pl-k">=</span> sm.ols(<span class="pl-smi">formula</span><span class="pl-k">=</span>form, <span class="pl-smi">data</span><span class="pl-k">=</span>iris1).fit()
+fit2 <span class="pl-k">=</span> sm.ols(<span class="pl-smi">formula</span><span class="pl-k">=</span>form, <span class="pl-smi">data</span><span class="pl-k">=</span>iris2).fit()
+fit3 <span class="pl-k">=</span> sm.ols(<span class="pl-smi">formula</span><span class="pl-k">=</span>form, <span class="pl-smi">data</span><span class="pl-k">=</span>iris3).fit()
+
+<span class="pl-c"># Get a random subset of the iris data.</span>
+iris_sample <span class="pl-k">=</span> iris.sample(<span class="pl-c1">50</span>)
+
+est1 <span class="pl-k">=</span> fit1.predict(iris_sample)
+est2 <span class="pl-k">=</span> fit2.predict(iris_sample)
+est3 <span class="pl-k">=</span> fit3.predict(iris_sample)
+
+<span class="pl-c"># Print the in-sample standard errors.</span>
+<span class="pl-k">print</span> pstdev(est1 <span class="pl-k">-</span> iris_sample[<span class="pl-s"><span class="pl-pds">'</span>SepalLength<span class="pl-pds">'</span></span>])
+<span class="pl-c"># 0.3014955119</span>
+<span class="pl-k">print</span> pstdev(est2 <span class="pl-k">-</span> iris_sample[<span class="pl-s"><span class="pl-pds">'</span>SepalLength<span class="pl-pds">'</span></span>])
+<span class="pl-c"># 0.279841460366</span>
+<span class="pl-k">print</span> pstdev(est3 <span class="pl-k">-</span> iris_sample[<span class="pl-s"><span class="pl-pds">'</span>SepalLength<span class="pl-pds">'</span></span>])
+<span class="pl-c"># 0.363993665693</span>
+
+training_data <span class="pl-k">=</span> {<span class="pl-s"><span class="pl-pds">"</span>prediction<span class="pl-pds">"</span></span> : {<span class="pl-s"><span class="pl-pds">'</span>a<span class="pl-pds">'</span></span>: est1,
+                                 <span class="pl-s"><span class="pl-pds">'</span>b<span class="pl-pds">'</span></span>: est2,
+                                 <span class="pl-s"><span class="pl-pds">'</span>c<span class="pl-pds">'</span></span>: est3},
+                 <span class="pl-s"><span class="pl-pds">"</span>actual<span class="pl-pds">"</span></span> : iris_sample[<span class="pl-s"><span class="pl-pds">'</span>SepalLength<span class="pl-pds">'</span></span>]}
+
+<span class="pl-c"># Use the training data to fit the OLS aggregator.</span>
+mco <span class="pl-k">=</span> MinimumContinuousOLS()
+mco.train(training_data)
+
+<span class="pl-c"># Print the standard deviation of the aggregator.</span>
+<span class="pl-k">print</span> pstdev(mco.predict(training_data[<span class="pl-s"><span class="pl-pds">'</span>prediction<span class="pl-pds">'</span></span>]) <span class="pl-k">-</span> \
+                         iris_sample[<span class="pl-s"><span class="pl-pds">'</span>SepalLength<span class="pl-pds">'</span></span>])
+<span class="pl-c"># 0.271979762123</span></pre></div>
+
+<p>The OLS aggregator provides a small increase of in-sample variance. Other model-based
+aggregators include minimum variance (for both categorical and continuous outcomes)
+and a random forests aggregator.</p>
+
+<h1>
+<a id="benchmarks" class="anchor" href="#benchmarks" aria-hidden="true"><span class="octicon octicon-link"></span></a>Benchmarks</h1>
+
+<p><em>coming by the end of Dec. 30 2015</em></p>
+
+<h1>
+<a id="contact" class="anchor" href="#contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contact</h1>
+
+<p>Contributions are welcome.</p>
+
+<p>For more information contact Michael Kane at <a href="kaneplusplus@gmail.com">kaneplusplus@gmail.com</a>.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">stat_agg maintained by <a href="https://github.com/kaneplusplus">kaneplusplus</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>

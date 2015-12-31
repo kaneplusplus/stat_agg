@@ -1,3 +1,7 @@
+---
+output: html_document
+---
+
 # Benchmark
 
 The stat_agg package was intented to be used for an ensemble of 
@@ -35,7 +39,7 @@ classification benchmarks.
 
 To create the files needed for the benchmark you can simply either source 
 make_data.r or call it from the terminal.
-```{bash}
+```{bash, eval=FALSE}
 Rscript make_data.r
 ```
 
@@ -64,11 +68,24 @@ for the prediction, whether it is because the learner is not available or
 because it is taking too long, the internal weighting of the learners is
 recalculated. The timing can be reproduced by by running the script.
 
-```{bash}
+```{bash, eval=FALSE}
 python benchmark_classification.py
 ```
 
-```{r, fig.height=800, fig.width=400, echo=FALSE}
+```
+## 367.94 seconds to predict 1 variables.
+## 338.02 seconds to predict 2 variables.
+## 349.28 seconds to predict 3 variables.
+## 351.94 seconds to predict 4 variables.
+## 355.63 seconds to predict 5 variables.
+## 356.56 seconds to predict 6 variables.
+## 366.35 seconds to predict 7 variables.
+## 361.46 seconds to predict 8 variables.
+## 356.29 seconds to predict 9 variables.
+## 364.98 seconds to predict 10 variables.
+```
+
+```{r, echo=FALSE}
 library(ggplot2)
 library(foreach)
 x = read.csv("class_pred.csv")
@@ -104,11 +121,25 @@ because it is taking too long, the internal weighting of the learners is
 recalculated. The timing for least squares can be tested simply by running 
 the script.
 
-```{bash}
+```{bash, eval=FALSE}
 python benchmark_regression.py
 ```
 
-```{r, fig.height=800, fig.width=400, echo=FALSE}
+```
+## 0.06 seconds for training.
+## 0.20 seconds to predict 1 variables.
+## 0.18 seconds to predict 2 variables.
+## 0.25 seconds to predict 3 variables.
+## 0.31 seconds to predict 4 variables.
+## 0.38 seconds to predict 5 variables.
+## 0.46 seconds to predict 6 variables.
+## 0.53 seconds to predict 7 variables.
+## 0.60 seconds to predict 8 variables.
+## 0.75 seconds to predict 9 variables.
+## 0.83 seconds to predict 10 variables.
+```
+
+```{r, echo=FALSE}
 library(ggplot2)
 library(foreach)
 x = read.csv("ols_pred.csv")

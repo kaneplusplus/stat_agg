@@ -1,3 +1,7 @@
+---
+output: html_document
+---
+
 # Benchmark
 
 The stat_agg package was intented to be used for an ensemble of 
@@ -38,13 +42,6 @@ make_data.r or call it from the terminal.
 
 ```bash
 Rscript make_data.r
-```
-
-```
-## trying URL 'http://stat-computing.org/dataexpo/2009/2008.csv.bz2'
-## Content type 'application/x-bzip2' length 113753229 bytes (108.5 MB)
-## ==================================================
-## downloaded 108.5 MB
 ```
 
 ## The Benchmark Datasets

@@ -4,7 +4,7 @@ output: html_document
 
 # Benchmark
 
-The stat_agg package was intented to be used for an ensemble of 
+The stat_agg package was intended to be used for an ensemble of 
 heterogeneous learners. It should be noted that this is slightly different
 than the ensemble learners provided in packages like sklearn, where each
 learner resamples a single data set and/or the parameters for each learner are
